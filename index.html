@@ -1499,7 +1499,7 @@ class AI extends Entity {
     }
     
     _separate(others) {
-        const MIN_DIST = 65;
+        const MIN_DIST = 130;
         for (const other of others) {
             if (other === this) continue;
             const dx = this.x - other.x, dy = this.y - other.y;
@@ -1853,23 +1853,44 @@ function resetPos() {
     ballKicked = false;
     // 玩家初始位置在场地底部
     player = new Player(W / 2, FIELD.bottom - 100);
-    // 10个AI防守队员分散在4层防线上，每层1个慢速
-    const layer1Y = PENALTY.bottom + 60;
-    const layer2Y = PENALTY.bottom + 260;
-    const layer3Y = MID_Y + 20;
-    const layer4Y = MID_Y + 260;
-    ais = [
-        new AI(W * 0.2, layer1Y, 'marker', true),   // 慢速
-        new AI(W * 0.75, layer1Y, 'marker'),
-        new AI(W * 0.1, layer2Y, 'interceptor'),
-        new AI(W * 0.5, layer2Y, 'interceptor', true), // 慢速
-        new AI(W * 0.9, layer2Y, 'interceptor'),
-        new AI(W * 0.15, layer3Y, 'interceptor'),
-        new AI(W * 0.55, layer3Y, 'interceptor', true), // 慢速
-        new AI(W * 0.85, layer3Y, 'interceptor'),
-        new AI(W * 0.2, layer4Y, 'free', true),     // 慢速
-        new AI(W * 0.8, layer4Y, 'free')
-    ];
+    // 10个AI随机均匀分布在球场上
+    const minY = PENALTY.bottom + 40;
+    const maxY = FIELD.bottom - 200;
+    const rangeY = maxY - minY;
+    const rangeX = FIELD.right - FIELD.left - 60;
+    const startX = FIELD.left + 30;
+    const MIN_SPACING = 130;
+    const positions = [];
+    for (let i = 0; i < 10; i++) {
+        const segY = minY + (rangeY / 10) * i + Math.random() * (rangeY / 10);
+        const segX = startX + Math.random() * rangeX;
+        positions.push({ x: segX, y: segY });
+    }
+    // 推开重叠位置，确保最小间距
+    for (let iter = 0; iter < 30; iter++) {
+        for (let i = 0; i < positions.length; i++) {
+            for (let j = i + 1; j < positions.length; j++) {
+                const dx = positions[i].x - positions[j].x;
+                const dy = positions[i].y - positions[j].y;
+                const d = Math.sqrt(dx * dx + dy * dy) || 1;
+                if (d < MIN_SPACING) {
+                    const push = (MIN_SPACING - d) * 0.5;
+                    positions[i].x += (dx / d) * push;
+                    positions[i].y += (dy / d) * push;
+                    positions[j].x -= (dx / d) * push;
+                    positions[j].y -= (dy / d) * push;
+                }
+            }
+        }
+    }
+    for (const p of positions) {
+        p.x = Math.max(FIELD.left + 30, Math.min(FIELD.right - 30, p.x));
+        p.y = Math.max(minY, Math.min(maxY, p.y));
+    }
+    const types = ['marker', 'marker', 'interceptor', 'interceptor', 'interceptor', 'interceptor', 'interceptor', 'interceptor', 'free', 'free'];
+    const slowIndices = new Set();
+    while (slowIndices.size < 3) slowIndices.add(Math.floor(Math.random() * 10));
+    ais = positions.map((p, i) => new AI(p.x, p.y, types[i], slowIndices.has(i)));
     for (let i = 0; i < ais.length; i++) ais[i].setAIIndex(i);
     keeper = new Keeper(W / 2, GOAL.cy);
     ball = new Ball(W / 2, FIELD.bottom - 100);
