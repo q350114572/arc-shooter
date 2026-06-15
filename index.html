@@ -12,7 +12,7 @@ html,body{width:100%;min-height:100%;background:#1a1a2e;display:flex;justify-con
 #dbg{position:absolute;top:0;left:0;z-index:9999;color:#0f0;font-size:12px;background:rgba(0,0,0,0.85);padding:4px 8px;pointer-events:none;width:100%}
 
 /* 游戏容器 */
-#game-container{width:360px;height:640px;position:relative;overflow:hidden;background:#0a1628;border:2px solid #2a4a6a;border-radius:8px;margin:50px auto;}
+#game-container{width:360px;height:var(--game-h,640px);position:relative;overflow:hidden;background:#0a1628;border:2px solid #2a4a6a;border-radius:8px;margin:var(--game-mt,50px) auto var(--game-mb,50px)}
 
 /* 草地 */
 #field{position:absolute;width:100%;height:100%;overflow:hidden}
@@ -274,8 +274,24 @@ function playCelebration(cb){
   };
 }
 
+// ===== 自适应高度 =====
+(function autoFit() {
+  const GAME_W = 360;
+  const PADDING = 50; // 上下各留50px空白
+  const sw = window.innerWidth;
+  const sh = window.innerHeight;
+  const availH = sh - PADDING * 2;  // 可用高度
+  const gameH = Math.min(640, availH);  // 不超过640，不超出屏幕
+  const mt = Math.max(10, Math.floor((sh - gameH) / 2));
+  document.documentElement.style.setProperty('--game-h', gameH + 'px');
+  document.documentElement.style.setProperty('--game-mt', mt + 'px');
+  document.documentElement.style.setProperty('--game-mb', mt + 'px');
+  window.__GAME_H = gameH;
+})();
+window.addEventListener('resize', function() { location.reload(); });
+
 // ===== 全局常量 =====
-const VIEW_W = 360, VIEW_H = 640;           // 可视窗口
+const VIEW_W = 360, VIEW_H = window.__GAME_H || 640;           // 可视窗口
 const FIELD_W = 360, FIELD_H = 1067;         // 逻辑场地尺寸
 const PLAYER_SPEED = 4;
 const BALL_SPEED = 14;
