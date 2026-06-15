@@ -320,6 +320,7 @@ let defenderEls = [];
 
 // ===== 输入状态 =====
 const input = { dx: 0, dy: 0, shoot: false };
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 const keys = {};
 let mouseTarget = null;
   let wasTouching = false;
@@ -437,7 +438,8 @@ function bindEvents() {
   // 仅桌面端点击生效，触摸设备靠摇杆操控
   container.addEventListener('click', (e) => {
     if (!running || endScreen.style.display === 'flex' || gameOver) return;
-    if (wasTouching) { wasTouching = false; return; } // 触摸后的ghost click，忽略
+    if (isTouchDevice) return;  // 触摸设备完全禁止click移动
+    if (wasTouching) { wasTouching = false; return; }
     const rect = container.getBoundingClientRect();
     const tx = e.clientX - rect.left + camera.x;
     const ty = e.clientY - rect.top + camera.y;
@@ -447,13 +449,12 @@ function bindEvents() {
   // 触摸直接设目标会导致失控，改为清除目标
   container.addEventListener('touchstart', (e) => {
     mouseTarget = null;
-    input.dx = 0; input.dy = 0;  // 清除可能残留的输入
     wasTouching = true;
     clearTimeout(wasTouchingTimer);
     wasTouchingTimer = setTimeout(() => { wasTouching = false; }, 1500);
   }, { passive: true });
   container.addEventListener('touchmove', (e) => { mouseTarget = null; }, { passive: true });
-  container.addEventListener('touchend', () => { mouseTarget = null; input.dx = 0; input.dy = 0; }, { passive: true });
+  container.addEventListener('touchend', () => { mouseTarget = null; }, { passive: true });
   
   // ===== 射门/弧线按钮 =====
   const shootBtn = document.getElementById('shoot-btn');
@@ -484,12 +485,18 @@ function bindEvents() {
     updateJoystick(touch.clientX, touch.clientY);
   });
   
-  joystickZone.addEventListener('touchend', () => {
+  function resetJoystick() {
     joystickActive = false;
     input.dx = 0;
     input.dy = 0;
     joystickKnob.style.transform = 'translate(-50%, -50%)';
+  }
+  joystickZone.addEventListener('touchend', resetJoystick);
+  joystickZone.addEventListener('touchcancel', resetJoystick);
+  document.addEventListener('touchend', (e) => {
+    if (joystickActive && e.touches.length === 0) resetJoystick();
   });
+  document.addEventListener('touchcancel', () => { if (joystickActive) resetJoystick(); });
   
   // ===== 虚拟摇杆（鼠标） =====
   joystickZone.addEventListener('mousedown', (e) => {
@@ -515,6 +522,7 @@ function bindEvents() {
     document.removeEventListener('mousemove', onJoystickMouseMove);
     document.removeEventListener('mouseup', onJoystickMouseUp);
   }
+  window.addEventListener('blur', () => { if (joystickActive) onJoystickMouseUp(); });
   
   // ===== 开始按钮 =====
   document.getElementById('start-btn').addEventListener('click', () => {
@@ -697,6 +705,13 @@ function updateInput() {
         mouseTarget = null;
       }
     }
+  }
+  // 安全网：无任何输入源时强制清零
+  if (!joystickActive && !mouseTarget &&
+      !keys['w'] && !keys['s'] && !keys['a'] && !keys['d'] &&
+      !keys['arrowup'] && !keys['arrowdown'] && !keys['arrowleft'] && !keys['arrowright']) {
+    input.dx = 0;
+    input.dy = 0;
   }
 }
 
