@@ -20,7 +20,7 @@ html,body{width:100%;min-height:100%;background:#1a1a2e;display:flex;justify-con
 #field::before{content:'';position:absolute;top:0;left:0;width:100%;height:30px;background:linear-gradient(180deg,rgba(255,215,0,0.15),transparent);z-index:50;pointer-events:none}
 
 /* 草地背景 */
-.field-bg{position:absolute;width:360px;height:1067px;background:linear-gradient(180deg,#1e4620 0%,#2d5a2f 50%,#1e4620 100%)}
+.field-bg{position:absolute;width:360px;height:100%;background:linear-gradient(180deg,#1e4620 0%,#2d5a2f 50%,#1e4620 100%)}
 
 /* 草地纹理 */
 .field-bg::before{content:'';position:absolute;width:100%;height:100%;background:repeating-linear-gradient(90deg,transparent,transparent 76px,rgba(255,255,255,0.03) 76px,rgba(255,255,255,0.03) 80px)}
@@ -292,7 +292,7 @@ window.addEventListener('resize', function() { location.reload(); });
 
 // ===== 全局常量 =====
 const VIEW_W = 360, VIEW_H = window.__GAME_H || 640;           // 可视窗口
-const FIELD_W = 360, FIELD_H = 1067;         // 逻辑场地尺寸
+const FIELD_W = 360, FIELD_H = VIEW_H;         // 逻辑场地尺寸
 const PLAYER_SPEED = 4;
 const BALL_SPEED = 14;
 const BALL_FRICTION = 0.985;
@@ -308,8 +308,8 @@ const DISPLAY_LEADERBOARD = 10;
 const camera = { x: 0, y: 0 };
 
 // 玩家位置（逻辑坐标）
-let px = 180, py = 800;
-let bx = 180, by = 867;
+let px = 180, py = 530;
+let bx = 180, by = 597;
 
 // 足球速度
 let bvx = 0, bvy = 0;
@@ -327,7 +327,7 @@ let gameOver = false;
 
 // AI状态
 let keeperX = 180, keeperDir = 1;
-let keeperY = 40;
+let keeperY = 35;
 
 // 10名防守球员
 const DEFENDER_COUNT = 10;
@@ -401,7 +401,7 @@ function createDefenders() {
     
     // 每个格子的大小
     const cellW = (FIELD_W - 100) / 2;
-    const cellH = (733 - 133) / 5;
+    const cellH = (380 - 80) / 5;
     
     // 格子中心 + 随机偏移
     const baseX = 50 + col * cellW + cellW / 2;
@@ -412,7 +412,7 @@ function createDefenders() {
     
     const def = {
       x: Math.max(30, Math.min(FIELD_W - 70, baseX + offsetX)),
-      y: Math.max(133, Math.min(733, baseY + offsetY)),
+      y: Math.max(80, Math.min(380, baseY + offsetY)),
       homeX: baseX + offsetX,
       homeY: baseY + offsetY,
       hasBall: false
@@ -608,8 +608,8 @@ function startGame() {
 }
 
 function resetGame() {
-  px = 180; py = 800;
-  bx = 180; by = 867;
+  px = 180; py = 530;
+  bx = 180; by = 597;
   bvx = 0; bvy = 0;
   hasBall = true;
   ballMoving = false;
@@ -626,14 +626,14 @@ function resetGame() {
     const col = i % 2;
     const row = Math.floor(i / 2);
     const cellW = (FIELD_W - 100) / 2;
-    const cellH = (733 - 133) / 5;
+    const cellH = (380 - 80) / 5;
     const baseX = 50 + col * cellW + cellW / 2;
     const baseY = 200 + row * cellH + cellH / 2;
     const offsetX = (Math.random() - 0.5) * cellW * 0.6;
     const offsetY = (Math.random() - 0.5) * cellH * 0.6;
     
     def.x = Math.max(20, Math.min(FIELD_W - 50, baseX + offsetX));
-    def.y = Math.max(133, Math.min(733, baseY + offsetY));
+    def.y = Math.max(80, Math.min(380, baseY + offsetY));
     def.homeX = baseX + offsetX;
     def.homeY = baseY + offsetY;
     def.hasBall = false;
@@ -673,7 +673,7 @@ function gameLoop(t) {
 // ===== 摄像机更新 =====
 function updateCamera(instant) {
   const targetCamX = px + 30 - VIEW_W / 2;
-  const targetCamY = by - VIEW_H * 0.3;  // 玩家在屏幕偏下方，确保球门可见
+  const targetCamY = 0;  // 玩家在屏幕偏下方，确保球门可见
   
   if (instant) {
     camera.x = targetCamX;
@@ -681,12 +681,12 @@ function updateCamera(instant) {
   } else {
     // lerp平滑插值
     camera.x += (targetCamX - camera.x) * 0.1;
-    camera.y += (targetCamY - camera.y) * 0.1;
+    camera.y = 0;
   }
   
   // 限制在场地范围内
   camera.x = Math.max(0, Math.min(FIELD_W - VIEW_W, camera.x));
-  camera.y = Math.max(-50, Math.min(FIELD_H - VIEW_H, camera.y));
+  camera.y = 0;
 }
 
 // ===== 输入处理 =====
@@ -811,7 +811,7 @@ function updateBall() {
     bx = FIELD_W - 15;
   }
   // 顶部边界（球门外区域反弹，球门区域内不反弹让球进门）
-  if (by < 15 && !(bx > 100 && bx < 260 && by > -10)) {
+  if (by < 10 && !(bx > 100 && bx < 260 && by > -10)) {
     bvy = Math.abs(bvy) * 0.8 + 1;
     by = 15;
   }
@@ -855,7 +855,7 @@ function updateAI() {
   if (keeperX > 260) keeperDir = -1;
   
   // 如果球在上半区，守门员上前
-  if (by < 200) {
+  if (by < 180) {
     const targetX = bx;
     keeperX += (targetX - keeperX) * 0.05;
   }
@@ -1055,7 +1055,7 @@ function checkGoal() {
   if (gameOver) return;
   
   // 球在球门区域（x:220-420, y:0-53）且靠近顶部
-  if (bx > 100 && bx < 260 && by < 40 && by > 10) {
+  if (bx > 100 && bx < 260 && by < 35 && by > 10) {
     gameWin();
     return;
   }
