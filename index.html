@@ -12,7 +12,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;display:flex
 #dbg{position:absolute;top:0;left:0;z-index:9999;color:#0f0;font-size:12px;background:rgba(0,0,0,0.85);padding:4px 8px;pointer-events:none;width:100%}
 
 /* 游戏容器 */
-#game-container{width:480px;height:800px;position:relative;overflow:hidden;background:#0a1628;border:2px solid #2a4a6a;border-radius:8px;padding-top:env(safe-area-inset-top, 0px);transform-origin:top center;transition:none}
+#game-container{width:360px;height:680px;position:relative;overflow:hidden;background:#0a1628;border:2px solid #2a4a6a;border-radius:8px;padding-top:env(safe-area-inset-top, 0px);}
 
 /* 草地 */
 #field{position:absolute;width:100%;height:100%;overflow:hidden}
@@ -20,13 +20,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;display:flex
 #field::before{content:'';position:absolute;top:0;left:0;width:100%;height:30px;background:linear-gradient(180deg,rgba(255,215,0,0.15),transparent);z-index:50;pointer-events:none}
 
 /* 草地背景 */
-.field-bg{position:absolute;width:480px;height:1067px;background:linear-gradient(180deg,#1e4620 0%,#2d5a2f 50%,#1e4620 100%)}
+.field-bg{position:absolute;width:360px;height:1067px;background:linear-gradient(180deg,#1e4620 0%,#2d5a2f 50%,#1e4620 100%)}
 
 /* 草地纹理 */
 .field-bg::before{content:'';position:absolute;width:100%;height:100%;background:repeating-linear-gradient(90deg,transparent,transparent 76px,rgba(255,255,255,0.03) 76px,rgba(255,255,255,0.03) 80px)}
 
 /* 中场线 */
-#midline{position:absolute;width:480px;height:2px;background:rgba(255,255,255,0.4)}
+#midline{position:absolute;width:360px;height:2px;background:rgba(255,255,255,0.4)}
 
 /* 中圈 */
 #midcircle{position:absolute;width:160px;height:160px;border:2px solid rgba(255,255,255,0.4);border-radius:50%}
@@ -66,13 +66,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;display:flex
 #timer{font-family:monospace;font-size:18px;color:#0f0}
 
 /* 射门按钮 */
-#shoot-btn{position:absolute;bottom:100px;right:20px;width:70px;height:70px;background:radial-gradient(circle,#ff4444,#cc0000);border-radius:50%;border:3px solid #ff6666;z-index:100;display:flex;justify-content:center;align-items:center;color:#fff;font-weight:bold;font-size:14px;box-shadow:0 4px 15px rgba(255,0,0,0.5);cursor:pointer}
+#shoot-btn{position:absolute;bottom:100px;right:15px;width:70px;height:70px;background:radial-gradient(circle,#ff4444,#cc0000);border-radius:50%;border:3px solid #ff6666;z-index:100;display:flex;justify-content:center;align-items:center;color:#fff;font-weight:bold;font-size:14px;box-shadow:0 4px 15px rgba(255,0,0,0.5);cursor:pointer}
 #shoot-btn:active{transform:scale(0.95);box-shadow:0 2px 8px rgba(255,0,0,0.5)}
 
 
 
 /* 虚拟摇杆 */
-#joystick-zone{position:absolute;bottom:20px;left:20px;width:120px;height:120px;background:rgba(255,255,255,0.1);border-radius:50%;border:2px solid rgba(255,255,255,0.3);z-index:100}
+#joystick-zone{position:absolute;bottom:20px;left:15px;width:100px;height:120px;background:rgba(255,255,255,0.1);border-radius:50%;border:2px solid rgba(255,255,255,0.3);z-index:100}
 #joystick-knob{position:absolute;width:50px;height:50px;background:rgba(255,255,255,0.6);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,0.8)}
 
 /* ===== 开始界面 ===== */
@@ -274,29 +274,9 @@ function playCelebration(cb){
   };
 }
 
-// ===== 自适应缩放 =====
-function autoScale() {
-  const container = document.getElementById('game-container');
-  const sw = window.innerWidth;
-  const sh = window.innerHeight;
-  // 以宽度为基准缩放，确保游戏不超出屏幕
-  const scaleX = sw / 480;
-  const scaleY = sh / 800;
-  const scale = Math.min(scaleX, scaleY, 1);  // 不放大，只缩小
-  container.style.transform = 'scale(' + scale + ')';
-  container.style.transformOrigin = 'top center';
-  // 垂直居中偏移
-  const actualH = 800 * scale;
-  const topOffset = Math.max(0, (sh - actualH) / 2);
-  container.style.marginTop = topOffset + 'px';
-}
-autoScale();
-window.addEventListener('resize', autoScale);
-window.addEventListener('orientationchange', () => setTimeout(autoScale, 300));
-
 // ===== 全局常量 =====
-const VIEW_W = 480, VIEW_H = 800;           // 可视窗口
-const FIELD_W = 480, FIELD_H = 1067;         // 逻辑场地尺寸
+const VIEW_W = 360, VIEW_H = 680;           // 可视窗口
+const FIELD_W = 360, FIELD_H = 1067;         // 逻辑场地尺寸
 const PLAYER_SPEED = 4;
 const BALL_SPEED = 14;
 const BALL_FRICTION = 0.985;
@@ -312,8 +292,8 @@ const DISPLAY_LEADERBOARD = 10;
 const camera = { x: 0, y: 0 };
 
 // 玩家位置（逻辑坐标）
-let px = 240, py = 800;
-let bx = 240, by = 867;
+let px = 180, py = 800;
+let bx = 180, by = 867;
 
 // 足球速度
 let bvx = 0, bvy = 0;
@@ -330,7 +310,7 @@ let elapsed = 0;
 let gameOver = false;
 
 // AI状态
-let keeperX = 240, keeperDir = 1;
+let keeperX = 180, keeperDir = 1;
 let keeperY = 40;
 
 // 10名防守球员
@@ -612,8 +592,8 @@ function startGame() {
 }
 
 function resetGame() {
-  px = 320; py = 800;
-  bx = 320; by = 867;
+  px = 180; py = 800;
+  bx = 180; by = 867;
   bvx = 0; bvy = 0;
   hasBall = true;
   ballMoving = false;
@@ -622,7 +602,7 @@ function resetGame() {
   gameOver = false;
   
   // 重置守门员位置
-  keeperX = 320;
+  keeperX = 180;
   keeperDir = 1;
   
   // 重置防守球员位置
@@ -677,7 +657,7 @@ function gameLoop(t) {
 // ===== 摄像机更新 =====
 function updateCamera(instant) {
   const targetCamX = px + 30 - VIEW_W / 2;
-  const targetCamY = py - 520;  // 玩家在屏幕偏下方，确保球门可见
+  const targetCamY = py - 580;  // 玩家在屏幕偏下方，确保球门可见
   
   if (instant) {
     camera.x = targetCamX;
@@ -815,7 +795,7 @@ function updateBall() {
     bx = FIELD_W - 15;
   }
   // 顶部边界（球门外区域反弹，球门区域内不反弹让球进门）
-  if (by < 15 && !(bx > 140 && bx < 340 && by > -10)) {
+  if (by < 15 && !(bx > 100 && bx < 260 && by > -10)) {
     bvy = Math.abs(bvy) * 0.8 + 1;
     by = 15;
   }
@@ -855,8 +835,8 @@ function addTrail(x, y) {
 function updateAI() {
   // 守门员巡逻
   keeperX += keeperDir * KEEPER_SPEED * 0.5;
-  if (keeperX < 140) keeperDir = 1;
-  if (keeperX > 340) keeperDir = -1;
+  if (keeperX < 100) keeperDir = 1;
+  if (keeperX > 260) keeperDir = -1;
   
   // 如果球在上半区，守门员上前
   if (by < 200) {
@@ -865,7 +845,7 @@ function updateAI() {
   }
   
   // 守门员边界
-  keeperX = Math.max(140, Math.min(340, keeperX));
+  keeperX = Math.max(100, Math.min(260, keeperX));
 }
 
 // ===== 防守球员AI =====
@@ -1059,7 +1039,7 @@ function checkGoal() {
   if (gameOver) return;
   
   // 球在球门区域（x:220-420, y:0-53）且靠近顶部
-  if (bx > 140 && bx < 340 && by < 40 && by > 10) {
+  if (bx > 100 && bx < 260 && by < 40 && by > 10) {
     gameWin();
     return;
   }
