@@ -6,13 +6,13 @@
 <title>弧线射手</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
-html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;display:flex;justify-content:center;align-items:center}
+html,body{width:100%;min-height:100%;background:#1a1a2e;display:flex;justify-content:center;align-items:flex-start;overflow-y:auto}
 
 /* 调试面板 */
 #dbg{position:absolute;top:0;left:0;z-index:9999;color:#0f0;font-size:12px;background:rgba(0,0,0,0.85);padding:4px 8px;pointer-events:none;width:100%}
 
 /* 游戏容器 */
-#game-container{width:360px;height:680px;position:relative;overflow:hidden;background:#0a1628;border:2px solid #2a4a6a;border-radius:8px;padding-top:env(safe-area-inset-top, 0px);}
+#game-container{width:360px;height:640px;position:relative;overflow:hidden;background:#0a1628;border:2px solid #2a4a6a;border-radius:8px;margin:50px auto;}
 
 /* 草地 */
 #field{position:absolute;width:100%;height:100%;overflow:hidden}
@@ -275,7 +275,7 @@ function playCelebration(cb){
 }
 
 // ===== 全局常量 =====
-const VIEW_W = 360, VIEW_H = 680;           // 可视窗口
+const VIEW_W = 360, VIEW_H = 640;           // 可视窗口
 const FIELD_W = 360, FIELD_H = 1067;         // 逻辑场地尺寸
 const PLAYER_SPEED = 4;
 const BALL_SPEED = 14;
