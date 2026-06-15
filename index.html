@@ -12,10 +12,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;display:flex
 #dbg{position:absolute;top:0;left:0;z-index:9999;color:#0f0;font-size:12px;background:rgba(0,0,0,0.85);padding:4px 8px;pointer-events:none;width:100%}
 
 /* 游戏容器 */
-#game-container{width:480px;height:800px;position:relative;overflow:hidden;background:#0a1628;border:2px solid #2a4a6a;border-radius:8px}
+#game-container{width:480px;height:800px;position:relative;overflow:hidden;background:#0a1628;border:2px solid #2a4a6a;border-radius:8px;padding-top:env(safe-area-inset-top, 0px)}
 
 /* 草地 */
 #field{position:absolute;width:100%;height:100%;overflow:hidden}
+/* 移动端顶部安全区提示 */
+#field::before{content:'';position:absolute;top:0;left:0;width:100%;height:30px;background:linear-gradient(180deg,rgba(255,215,0,0.15),transparent);z-index:50;pointer-events:none}
 
 /* 草地背景 */
 .field-bg{position:absolute;width:640px;height:1067px;background:linear-gradient(180deg,#1e4620 0%,#2d5a2f 50%,#1e4620 100%)}
@@ -641,7 +643,7 @@ function gameLoop(t) {
 // ===== 摄像机更新 =====
 function updateCamera(instant) {
   const targetCamX = px + 30 - VIEW_W / 2;
-  const targetCamY = py - 530;  // 玩家在屏幕偏下方约2/3位置
+  const targetCamY = py - 480;  // 玩家在屏幕偏下方，确保球门可见
   
   if (instant) {
     camera.x = targetCamX;
