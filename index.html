@@ -290,8 +290,8 @@ const DISPLAY_LEADERBOARD = 10;
 const camera = { x: 0, y: 0 };
 
 // 玩家位置（逻辑坐标）
-let px = 320, py = 800;
-let bx = 320, by = 867;
+let px = 240, py = 800;
+let bx = 240, by = 867;
 
 // 足球速度
 let bvx = 0, bvy = 0;
@@ -300,6 +300,7 @@ let bvx = 0, bvy = 0;
 let hasBall = true;
 let ballMoving = false;
 let shootCooldown = 0;
+let defenderKickCooldown = 0;  // 防守球员解围冷却，防止球反复被截
 
 // 计时
 let startTime = 0;
@@ -307,7 +308,7 @@ let elapsed = 0;
 let gameOver = false;
 
 // AI状态
-let keeperX = 320, keeperDir = 1;
+let keeperX = 240, keeperDir = 1;
 let keeperY = 40;
 
 // 10名防守球员
@@ -444,11 +445,13 @@ function bindEvents() {
   // 触摸直接设目标会导致失控，改为清除目标
   container.addEventListener('touchstart', (e) => {
     mouseTarget = null;
+    input.dx = 0; input.dy = 0;  // 清除可能残留的输入
     wasTouching = true;
     clearTimeout(wasTouchingTimer);
-    wasTouchingTimer = setTimeout(() => { wasTouching = false; }, 500);
+    wasTouchingTimer = setTimeout(() => { wasTouching = false; }, 1500);
   }, { passive: true });
   container.addEventListener('touchmove', (e) => { mouseTarget = null; }, { passive: true });
+  container.addEventListener('touchend', () => { mouseTarget = null; input.dx = 0; input.dy = 0; }, { passive: true });
   
   // ===== 射门/弧线按钮 =====
   const shootBtn = document.getElementById('shoot-btn');
@@ -643,7 +646,7 @@ function gameLoop(t) {
 // ===== 摄像机更新 =====
 function updateCamera(instant) {
   const targetCamX = px + 30 - VIEW_W / 2;
-  const targetCamY = py - 480;  // 玩家在屏幕偏下方，确保球门可见
+  const targetCamY = py - 520;  // 玩家在屏幕偏下方，确保球门可见
   
   if (instant) {
     camera.x = targetCamX;
@@ -714,6 +717,7 @@ function updatePlayer() {
   
   // 射门冷却
   if (shootCooldown > 0) shootCooldown--;
+  if (defenderKickCooldown > 0) defenderKickCooldown--;
   
   // 射门
   if (input.shoot && hasBall && shootCooldown === 0) {
@@ -728,6 +732,7 @@ function doShoot() {
   ballMoving = true;
   shootCooldown = 30;
   mouseTarget = null;  // 射门后清除鼠标目标，防止持续自动移动
+  input.dx = 0; input.dy = 0;  // 同时清除输入方向
   
   // 计算射门方向（基于当前移动方向或默认向上）
   let sx = input.dx;
@@ -772,7 +777,7 @@ function updateBall() {
     bx = FIELD_W - 15;
   }
   // 顶部边界（球门外区域反弹，球门区域内不反弹让球进门）
-  if (by < 15 && !(bx > 220 && bx < 420 && by > -10)) {
+  if (by < 15 && !(bx > 140 && bx < 340 && by > -10)) {
     bvy = Math.abs(bvy) * 0.8 + 1;
     by = 15;
   }
@@ -812,8 +817,8 @@ function addTrail(x, y) {
 function updateAI() {
   // 守门员巡逻
   keeperX += keeperDir * KEEPER_SPEED * 0.5;
-  if (keeperX < 220) keeperDir = 1;
-  if (keeperX > 420) keeperDir = -1;
+  if (keeperX < 140) keeperDir = 1;
+  if (keeperX > 340) keeperDir = -1;
   
   // 如果球在上半区，守门员上前
   if (by < 200) {
@@ -822,7 +827,7 @@ function updateAI() {
   }
   
   // 守门员边界
-  keeperX = Math.max(220, Math.min(420, keeperX));
+  keeperX = Math.max(140, Math.min(340, keeperX));
 }
 
 // ===== 防守球员AI =====
@@ -856,8 +861,9 @@ function updateDefenders() {
     if (def.hasBall) {
       // 截到球了，向玩家半场方向踢出（解围）
       const kickDir = Math.atan2(py - def.y, px - def.x);
-      bvx = Math.cos(kickDir) * BALL_SPEED * 0.8;
-      bvy = Math.sin(kickDir) * BALL_SPEED * 0.8;
+      bvx = Math.cos(kickDir) * BALL_SPEED * 1.2;
+      bvy = Math.sin(kickDir) * BALL_SPEED * 1.2;
+      defenderKickCooldown = 30;  // 解围后冷却
       ballMoving = true;
       def.hasBall = false;
       dbgEl.textContent = `防守球员${i + 1}解围!`;
@@ -911,18 +917,20 @@ function checkCollisions() {
       const dy = def.y + 32 - by;
       if (dx * dx + dy * dy < (defenderRadius + ballRadius) ** 2) {
         // 截球成功
+        if (defenderKickCooldown > 0) return;  // 冷却中不截球
         def.hasBall = true;
         ballMoving = false;
         bvx = 0;
         bvy = 0;
         bx = def.x + 22;
         by = def.y + 32;
+        defenderKickCooldown = 30;  // 30帧冷却
         dbgEl.textContent = `防守球员${i + 1}截球!`;
       }
     });
     
     // 守门员扑球
-    if (!ballMoving) {  // 只有球还没被截走才检测
+    if (!ballMoving && defenderKickCooldown <= 0) {  // 冷却中不扑球
       const kdx = keeperX + 25 - bx;
       const kdy = keeperY + 35 - by;
       if (kdx * kdx + kdy * kdy < (keeperRadius + ballRadius) ** 2) {
@@ -1013,7 +1021,7 @@ function checkGoal() {
   if (gameOver) return;
   
   // 球在球门区域（x:220-420, y:0-53）且靠近顶部
-  if (bx > 220 && bx < 420 && by < 40 && by > 10) {
+  if (bx > 140 && bx < 340 && by < 40 && by > 10) {
     gameWin();
     return;
   }
