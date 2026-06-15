@@ -338,9 +338,6 @@ let defenderEls = [];
 const input = { dx: 0, dy: 0, shoot: false };
 const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 const keys = {};
-let mouseTarget = null;
-  let wasTouching = false;
-  let wasTouchingTimer = null;
 let joystickActive = false;
 let joystickStartX = 0, joystickStartY = 0;
 
@@ -452,25 +449,13 @@ function bindEvents() {
   
   // ===== 鼠标点击场地移动 =====
   // 仅桌面端点击生效，触摸设备靠摇杆操控
-  container.addEventListener('click', (e) => {
-    if (!running || endScreen.style.display === 'flex' || gameOver) return;
-    if (isTouchDevice) return;  // 触摸设备完全禁止click移动
-    if (wasTouching) { wasTouching = false; return; }
-    const rect = container.getBoundingClientRect();
-    const tx = e.clientX - rect.left + camera.x;
-    const ty = e.clientY - rect.top + camera.y;
-    mouseTarget = { x: tx, y: ty };
-    dbgEl.textContent = `鼠标目标: ${Math.round(tx)},${Math.round(ty)}`;
-  });
+  // click-to-move removed - only joystick/keyboard control);
   // 触摸直接设目标会导致失控，改为清除目标
   container.addEventListener('touchstart', (e) => {
-    mouseTarget = null;
-    wasTouching = true;
-    clearTimeout(wasTouchingTimer);
-    wasTouchingTimer = setTimeout(() => { wasTouching = false; }, 1500);
+    // touch start
   }, { passive: true });
-  container.addEventListener('touchmove', (e) => { mouseTarget = null; }, { passive: true });
-  container.addEventListener('touchend', () => { mouseTarget = null; }, { passive: true });
+  container.addEventListener('touchmove', (e) => {}, { passive: true });
+  container.addEventListener('touchend', () => {}, { passive: true });
   
   // ===== 射门/弧线按钮 =====
   const shootBtn = document.getElementById('shoot-btn');
@@ -602,7 +587,6 @@ function startGame() {
   input.dx = 0;
   input.dy = 0;
   input.shoot = false;
-  mouseTarget = null;
   dbgEl.textContent = '游戏开始!';
   requestAnimationFrame(gameLoop);
 }
@@ -614,7 +598,6 @@ function resetGame() {
   hasBall = true;
   ballMoving = false;
   shootCooldown = 0;
-  mouseTarget = null;
   gameOver = false;
   
   // 重置守门员位置
@@ -694,36 +677,14 @@ function updateInput() {
   // 键盘输入
   if (keys['w'] || keys['arrowup']) input.dy = -1;
   else if (keys['s'] || keys['arrowdown']) input.dy = 1;
-  else if (!joystickActive && !mouseTarget) input.dy = 0;
+  else if (!joystickActive) input.dy = 0;
   
   if (keys['a'] || keys['arrowleft']) input.dx = -1;
   else if (keys['d'] || keys['arrowright']) input.dx = 1;
-  else if (!joystickActive && !mouseTarget) input.dx = 0;
+  else if (!joystickActive) input.dx = 0;
   
-  // 鼠标目标（带超时保护，2秒后自动清除）
-  if (mouseTarget && !joystickActive) {
-    if (!mouseTarget.time) mouseTarget.time = Date.now();
-    if (Date.now() - mouseTarget.time > 1000) {
-      // 超时清除，防止持续失控
-      input.dx = 0;
-      input.dy = 0;
-      mouseTarget = null;
-    } else {
-      const dx = mouseTarget.x - px;
-      const dy = mouseTarget.y - py;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 10) {
-        input.dx = dx / dist;
-        input.dy = dy / dist;
-      } else {
-        input.dx = 0;
-        input.dy = 0;
-        mouseTarget = null;
-      }
-    }
-  }
   // 安全网：无任何输入源时强制清零
-  if (!joystickActive && !mouseTarget &&
+  if (!joystickActive &&
       !keys['w'] && !keys['s'] && !keys['a'] && !keys['d'] &&
       !keys['arrowup'] && !keys['arrowdown'] && !keys['arrowleft'] && !keys['arrowright']) {
     input.dx = 0;
@@ -765,7 +726,6 @@ function doShoot() {
   hasBall = false;
   ballMoving = true;
   shootCooldown = 30;
-  mouseTarget = null;  // 射门后清除鼠标目标，防止持续自动移动
   input.dx = 0; input.dy = 0;  // 同时清除输入方向
   
   // 计算射门方向（基于当前移动方向或默认向上）
